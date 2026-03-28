@@ -161,10 +161,10 @@ function MarginPresets({ value, onChange }: MarginPresetsProps) {
   })
 
   function applyCustom(next: CustomMargins) {
-    const t = parseFloat(next.top)    || 0
+    const t = parseFloat(next.top) || 0
     const b = parseFloat(next.bottom) || 0
-    const l = parseFloat(next.left)   || 0
-    const r = parseFloat(next.right)  || 0
+    const l = parseFloat(next.left) || 0
+    const r = parseFloat(next.right) || 0
     onChange('custom', { label: 'Custom', t, b, l, r })
   }
 
@@ -201,10 +201,10 @@ function MarginPresets({ value, onChange }: MarginPresetsProps) {
 
           {opt.value === 'custom' && value === 'custom' && (
             <div className="mt-2 ml-6 grid grid-cols-2 gap-x-3 gap-y-2">
-              {cmInput('Top',    custom.top,    setC('top'))}
+              {cmInput('Top', custom.top, setC('top'))}
               {cmInput('Bottom', custom.bottom, setC('bottom'))}
-              {cmInput('Left',   custom.left,   setC('left'))}
-              {cmInput('Right',  custom.right,  setC('right'))}
+              {cmInput('Left', custom.left, setC('left'))}
+              {cmInput('Right', custom.right, setC('right'))}
             </div>
           )}
         </div>
@@ -246,12 +246,12 @@ export function Sidebar({ file, settings, onChange }: Props) {
             </div>
             <input
               type="text"
-              value={settings.pageRange || 'All'}
+              value={settings.pageRange || ''} 
+              placeholder="All"
               onChange={(e) => {
-                const val = e.target.value
-                set('pageRange', val === 'All' ? '' : val)
+                set('pageRange', e.target.value)
               }}
-              className="w-28 text-sm border border-slate-300 rounded-sm px-2 py-1"
+              className="w-28 text-sm border border-slate-300 rounded-sm px-2 py-1 placeholder:text-slate-400"
             />
           </div>
 
