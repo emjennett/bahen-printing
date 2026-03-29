@@ -103,7 +103,9 @@ interface PageProps {
   pw: number
   ph: number
   mT: number; mB: number; mL: number; mR: number
-  nup: number
+  nup_col: number
+  nup_row: number
+  total_nup: number
   isFront: boolean
   showLabel: boolean
   showCutoff: boolean
@@ -112,9 +114,7 @@ interface PageProps {
   page: number[]
 }
 
-function RenderedPage({ pw, ph, mT, mB, mL, mR, nup, isFront, showLabel, showCutoff, file, scaleMultiplier, page }: PageProps) {
-  const nupCols = nup <= 2 ? nup : 2
-  const nupRows = Math.ceil(nup / nupCols)
+function RenderedPage({ pw, ph, mT, mB, mL, mR, nup_col, nup_row, total_nup, isFront, showLabel, showCutoff, file, scaleMultiplier, page }: PageProps) {
   const contentW = pw - mL - mR
   const contentH = ph - mT - mB
   const leftCutW = showCutoff ? Math.max(0, (1.5 * pw / A4_WIDTH_CM) - mL) : 0
@@ -155,15 +155,15 @@ function RenderedPage({ pw, ph, mT, mB, mL, mR, nup, isFront, showLabel, showCut
           overflow: 'hidden',
           transition: 'top 0.4s ease, left 0.4s ease, width 0.4s ease, height 0.4s ease',
         }}>
-          {nup > 1 ? (
+          {total_nup > 1 ? (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${nupCols}, 1fr)`,
-              gridTemplateRows: `repeat(${nupRows}, 1fr)`,
+              gridTemplateColumns: `repeat(${nup_col}, 1fr)`,
+              gridTemplateRows: `repeat(${nup_row}, 1fr)`,
               gap: 2,
               width: '100%', height: '100%',
             }}>
-              {Array.from({ length: nup }).map((_, i) => (
+              {Array.from({ length: total_nup }).map((_, i) => (
                 <div key={i} style={{
                   background: '#f8fafc',
                   border: '0.5px solid #e2e8f0',
@@ -172,12 +172,12 @@ function RenderedPage({ pw, ph, mT, mB, mL, mR, nup, isFront, showLabel, showCut
                   padding: 2,
                 }}>
                   <div style={{
-                    transform: `scale(${0.48 / Math.sqrt(nup)})`,
+                    transform: `scale(${0.48 / Math.sqrt(total_nup)})`,
                     transformOrigin: 'top left',
-                    width: `${Math.ceil(100 / (0.48 / Math.sqrt(nup)))}%`,
+                    width: `${Math.ceil(100 / (0.48 / Math.sqrt(total_nup)))}%`,
                     pointerEvents: 'none',
                   }}>
-                    <PageContent nup={nup} opacity={isFront ? 1 : 0.35} page={page[i]} />
+                    <PageContent nup={total_nup} opacity={isFront ? 1 : 0.35} page={page[i]} />
                   </div>
                   <span style={{
                     position: 'absolute', bottom: 1, right: 2,
@@ -240,7 +240,8 @@ export function DocPreview({ file, settings, onOpenFile }: Props) {
   // Guard against undefined margins (e.g. if initial state isn't set yet)
   const [animM, setAnimM] = useState(settings.margins ?? FALLBACK_MARGIN)
   const [animD, setAnimD] = useState(settings.duplex)
-  const [animN, setAnimN] = useState(settings.nup)
+  const [animNupCol, setAnimNupCol] = useState(settings.nup_col ?? 1)
+  const [animNupRow, setAnimNupRow] = useState(settings.nup_row ?? 1)
   const [animSc, setAnimSc] = useState(settings.scale)
   const [pageIndex, setPageIndex] = useState(0)
 
@@ -261,9 +262,13 @@ export function DocPreview({ file, settings, onOpenFile }: Props) {
   }, [settings.margins])
 
   useEffect(() => {
-    const t = setTimeout(() => { setAnimD(settings.duplex); setAnimN(settings.nup) }, 10)
+    const t = setTimeout(() => { 
+      setAnimD(settings.duplex); 
+      setAnimNupCol(settings.nup_col ?? 1);
+      setAnimNupRow(settings.nup_row ?? 1);
+    }, 10)
     return () => clearTimeout(t)
-  }, [settings.duplex, settings.nup])
+  }, [settings.duplex, settings.nup_col, settings.nup_row])
 
   useEffect(() => {
     const t = setTimeout(() => setAnimSc(settings.scale), 10)
@@ -291,15 +296,16 @@ export function DocPreview({ file, settings, onOpenFile }: Props) {
   const scaleMultiplier = parseFloat(animSc.replace('%', '')) / 100
   const isCutoff = file.cutoff && m.l * cmToPx < (1.5 * cmToPx)
 
-  const pagesPerView = animN * (animD ? 2 : 1)
+  const total_nup = animNupCol * animNupRow
+  const pagesPerView = total_nup * (animD ? 2 : 1)
   const currentViewPages = selectedPages.slice(pageIndex, pageIndex + pagesPerView)
-  const frontPageNumbers = currentViewPages.slice(0, animN)
-  const backPageNumbers = currentViewPages.slice(animN, animN * 2)
+  const frontPageNumbers = currentViewPages.slice(0, total_nup)
+  const backPageNumbers = currentViewPages.slice(total_nup, total_nup * 2)
   const isAtStart = pageIndex === 0
   const isAtEnd = pageIndex + pagesPerView >= selectedPages.length
 
 
-  const pageProps = { pw, ph, mT, mB, mL, mR, nup: animN, file, isCutoff, scaleMultiplier }
+  const pageProps = { pw, ph, mT, mB, mL, mR, nup_col: animNupCol, nup_row: animNupRow, file, isCutoff, scaleMultiplier }
 
   return (
     <div ref={containerRef} className="flex-1 bg-slate-100 flex flex-col items-center justify-center overflow-hidden min-h-0 min-w-0 gap-3">
@@ -332,16 +338,16 @@ export function DocPreview({ file, settings, onOpenFile }: Props) {
       <div className="flex items-start shrink-0" style={{ transition: 'gap 0.3s' }}>
         {animD ? (
           <>
-            <RenderedPage {...pageProps} isFront={true} showLabel={true} showCutoff={isCutoff} page={frontPageNumbers} />
+            <RenderedPage {...pageProps} isFront={true} showLabel={true} showCutoff={isCutoff} page={frontPageNumbers} total_nup={total_nup} />
             <div style={{
               width: spineW, height: ph, flexShrink: 0,
               background: 'linear-gradient(to right,#94a3b8 0%,#e2e8f0 45%,#e2e8f0 55%,#94a3b8 100%)',
               boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.07), inset 2px 0 4px rgba(0,0,0,0.07)',
             }} />
-            <RenderedPage {...pageProps} isFront={false} showLabel={true} showCutoff={false} page={backPageNumbers} />
+            <RenderedPage {...pageProps} isFront={false} showLabel={true} showCutoff={false} page={backPageNumbers} total_nup={total_nup}/>
           </>
         ) : (
-          <RenderedPage {...pageProps} isFront={true} showLabel={false} showCutoff={isCutoff} page={frontPageNumbers} />
+          <RenderedPage {...pageProps} isFront={true} showLabel={false} showCutoff={isCutoff} page={frontPageNumbers} total_nup={total_nup}/>
         )}
       </div>
 

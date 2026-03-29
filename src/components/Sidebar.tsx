@@ -257,7 +257,13 @@ export function Sidebar({ file, settings, onChange }: Props) {
 
           <div className="flex items-center justify-between py-1">
             <span className="text-xs font-sans text-slate-700">Pages per sheet</span>
-            <Stepper value={settings.nup} min={1} max={6} onChange={(v) => set('nup', v)} />
+          </div>
+
+          <div className="flex items-center justify-between py-1">
+            <span className="text-xs font-sans text-slate-700">Column</span>
+            <Stepper value={settings.nup_col ?? 1} min={1} max={3} onChange={(v) => set('nup_col', v)} />
+            <span className="text-xs font-sans text-slate-700">Row</span>
+            <Stepper value={settings.nup_row ?? 1} min={1} max={3} onChange={(v) => set('nup_row', v)} />
           </div>
 
           <div className="flex items-center justify-between py-1">

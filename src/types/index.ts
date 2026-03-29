@@ -22,7 +22,8 @@ export interface PrintSettings {
   margins: MarginOption
   duplex: boolean
   flipOnLongEdge: boolean
-  nup: number
+  nup_col: number
+  nup_row: number
   copies: number
   pageRange: string
   scale: string

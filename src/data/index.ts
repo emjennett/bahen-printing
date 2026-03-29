@@ -45,7 +45,8 @@ export const DEFAULT_SETTINGS: PrintSettings = {
   margins:        MARGIN_PRESETS.normal,
   duplex:         false,
   flipOnLongEdge: true,
-  nup:            1,
+  nup_col:            1,
+  nup_row:            1,
   copies:         1,
   pageRange:      '',
   scale:          '100%',
@@ -62,6 +63,6 @@ export function calcQuota(file: MockFile | null, settings: PrintSettings): numbe
         return acc
       }, 0)
     : total
-  const sheets = Math.ceil(Math.max(1, printed) / settings.nup)
+  const sheets = Math.ceil(Math.max(1, printed) / settings.nup_col / settings.nup_row)
   return Math.ceil(sheets / (settings.duplex ? 2 : 1)) * settings.copies
 }
